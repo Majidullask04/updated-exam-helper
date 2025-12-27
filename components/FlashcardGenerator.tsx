@@ -1,162 +1,113 @@
 import React, { useState } from 'react';
-import { Layers, Loader2, RefreshCw, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 import { generateFlashcards } from '../services/geminiService';
 import { Flashcard } from '../types';
+import { Layers, Loader2, RotateCw, Plus } from 'lucide-react';
 
 const FlashcardGenerator: React.FC = () => {
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [flippedIndices, setFlippedIndices] = useState<number[]>([]);
 
   const handleGenerate = async () => {
     if (!input.trim()) return;
-    
-    setIsLoading(true);
-    setError(null);
+    setLoading(true);
     setFlashcards([]);
-    setCurrentIndex(0);
-    setIsFlipped(false);
-    
+    setFlippedIndices([]);
     try {
       const cards = await generateFlashcards(input);
       setFlashcards(cards);
-    } catch (err) {
-        console.error(err);
-      setError("Could not generate flashcards. Try simplifying your text.");
+    } catch (error) {
+      console.error("Flashcard generation failed:", error);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleNext = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (currentIndex < flashcards.length - 1) {
-      setIsFlipped(false);
-      setTimeout(() => setCurrentIndex(prev => prev + 1), 150);
+  const toggleFlip = (index: number) => {
+    if (flippedIndices.includes(index)) {
+      setFlippedIndices(flippedIndices.filter(i => i !== index));
+    } else {
+      setFlippedIndices([...flippedIndices, index]);
     }
   };
-
-  const handlePrev = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (currentIndex > 0) {
-      setIsFlipped(false);
-      setTimeout(() => setCurrentIndex(prev => prev - 1), 150);
-    }
-  };
-
-  const reset = () => {
-    setFlashcards([]);
-    setInput('');
-    setCurrentIndex(0);
-    setIsFlipped(false);
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full text-slate-500 animate-in fade-in">
-        <Loader2 className="w-12 h-12 mb-4 animate-spin text-indigo-600" />
-        <p className="text-lg font-medium">Synthesizing concepts...</p>
-      </div>
-    );
-  }
-
-  if (flashcards.length > 0) {
-    return (
-      <div className="max-w-4xl mx-auto h-full flex flex-col items-center justify-center p-4">
-        <div className="w-full flex justify-between items-center mb-6">
-           <button onClick={reset} className="text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-2">
-             <RotateCcw className="w-4 h-4" /> New Set
-           </button>
-           <span className="text-sm font-semibold bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full">
-             Card {currentIndex + 1} of {flashcards.length}
-           </span>
-        </div>
-
-        <div className="relative w-full max-w-2xl aspect-[3/2] perspective-1000 group cursor-pointer" onClick={() => setIsFlipped(!isFlipped)}>
-            <div className={`w-full h-full relative preserve-3d transition-transform duration-500 ease-out-back ${isFlipped ? 'rotate-y-180' : ''}`}>
-                
-                {/* Front */}
-                <div className="absolute inset-0 backface-hidden bg-white rounded-3xl shadow-xl border border-slate-100 flex flex-col items-center justify-center p-8 text-center hover:shadow-2xl transition-shadow">
-                    <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-4">Question / Term</span>
-                    <h3 className="text-2xl md:text-3xl font-bold text-slate-800">
-                        {flashcards[currentIndex].front}
-                    </h3>
-                    <p className="absolute bottom-6 text-slate-400 text-sm animate-pulse">Click to flip</p>
-                </div>
-
-                {/* Back */}
-                <div className="absolute inset-0 backface-hidden rotate-y-180 bg-indigo-600 rounded-3xl shadow-xl flex flex-col items-center justify-center p-8 text-center text-white">
-                    <span className="text-xs uppercase tracking-widest text-indigo-200 font-bold mb-4">Answer / Definition</span>
-                    <p className="text-xl md:text-2xl leading-relaxed font-medium">
-                        {flashcards[currentIndex].back}
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <div className="flex items-center gap-4 mt-8">
-            <button 
-                onClick={handlePrev} 
-                disabled={currentIndex === 0}
-                className="p-3 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
-            >
-                <ChevronLeft className="w-6 h-6" />
-            </button>
-            <button 
-                onClick={handleNext} 
-                disabled={currentIndex === flashcards.length - 1}
-                className="p-3 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
-            >
-                <ChevronRight className="w-6 h-6" />
-            </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="max-w-2xl mx-auto h-full flex flex-col justify-center">
-      <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-100">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 bg-indigo-100 rounded-lg text-indigo-600">
-            <Layers className="w-6 h-6" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-slate-800">Flashcard Maker</h2>
-            <p className="text-slate-500">Convert notes into study cards instantly</p>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Paste your notes or enter a topic
-            </label>
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="e.g., The French Revolution was a period of radical political and societal change in France that began with the Estates General of 1789 and ended with..."
-              className="w-full h-40 p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all resize-none"
-            />
-          </div>
-
-          {error && (
-            <div className="p-4 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100">
-              {error}
+    <div className="h-full flex flex-col gap-6">
+      {/* Input Section */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div className="flex items-center gap-2 mb-4">
+            <div className="p-2 bg-orange-100 text-orange-600 rounded-lg">
+                <Layers size={20} />
             </div>
-          )}
-
+            <h2 className="text-lg font-bold text-slate-800">Flashcard Generator</h2>
+        </div>
+        <div className="flex gap-3">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Enter a topic or paste text to generate cards..."
+            className="flex-1 p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+            onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
+          />
           <button
             onClick={handleGenerate}
-            disabled={!input.trim()}
-            className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold text-lg hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
+            disabled={loading || !input.trim()}
+            className="px-6 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition-colors disabled:opacity-50 flex items-center gap-2"
           >
-            <RefreshCw className="w-5 h-5" />
-            Generate Flashcards
+            {loading ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}
+            Generate
           </button>
+        </div>
+      </div>
+
+      {/* Cards Grid */}
+      <div className="flex-1 overflow-y-auto">
+        {loading && (
+            <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+                <Loader2 size={40} className="animate-spin mb-4 text-orange-500" />
+                <p>Creating your study deck...</p>
+            </div>
+        )}
+
+        {!loading && flashcards.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-64 text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl">
+                <p>No cards generated yet.</p>
+            </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-6">
+          {flashcards.map((card, idx) => {
+            const isFlipped = flippedIndices.includes(idx);
+            return (
+              <div 
+                key={idx} 
+                className="group h-64 perspective-1000 cursor-pointer"
+                onClick={() => toggleFlip(idx)}
+              >
+                <div className={`relative w-full h-full transition-all duration-500 preserve-3d ${isFlipped ? 'rotate-y-180' : 'rotate-y-0'}`}>
+                    {/* Front */}
+                    <div className="absolute w-full h-full backface-hidden bg-white border border-slate-200 rounded-2xl p-6 flex flex-col justify-between shadow-sm group-hover:shadow-md transition-shadow">
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Front</div>
+                        <div className="text-lg font-medium text-slate-800 text-center">{card.front}</div>
+                        <div className="flex justify-center text-slate-400">
+                            <RotateCw size={16} />
+                        </div>
+                    </div>
+                    
+                    {/* Back */}
+                    <div className="absolute w-full h-full backface-hidden bg-slate-900 text-white rounded-2xl p-6 flex flex-col justify-between shadow-sm rotate-y-180">
+                         <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Back</div>
+                        <div className="text-base text-center leading-relaxed">{card.back}</div>
+                        <div className="flex justify-center text-slate-600">
+                            <RotateCw size={16} />
+                        </div>
+                    </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

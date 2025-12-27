@@ -66,7 +66,6 @@ const ChatInterface: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Note: messages variable here holds state BEFORE this update, so it serves as history
       const { text, groundingMetadata } = await chatWithTutor(messages, userMessage.text, userMessage.attachment);
 
       const botMessage: ChatMessage = {
@@ -112,7 +111,7 @@ const ChatInterface: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-2rem)] md:h-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-8rem)] md:h-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
       {/* Header */}
       <div className="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center">
         <div>
@@ -138,7 +137,7 @@ const ChatInterface: React.FC = () => {
             key={msg.id}
             className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            <div className={`flex max-w-[85%] md:max-w-[75%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'} items-start gap-2`}>
+            <div className={`flex max-w-[95%] md:max-w-[80%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'} items-start gap-2`}>
               <div className={`
                 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center
                 ${msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-emerald-600 text-white'}

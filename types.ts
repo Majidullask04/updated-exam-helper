@@ -1,5 +1,4 @@
 export enum View {
-  DASHBOARD = 'DASHBOARD',
   CHAT = 'CHAT',
   QUIZ = 'QUIZ',
   FLASHCARDS = 'FLASHCARDS',
